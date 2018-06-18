@@ -8,8 +8,10 @@ import sklearn.model_selection
 from sklearn.naive_bayes import GaussianNB
 from sklearn.linear_model import LogisticRegression
 
-
 def get_dataframe():
+    """
+    get_dataframe() outputs a dataframe with review labels as the first column.
+    """
 
     remote_reviews = remote_import.reviews
     local_reviews = local_import.reviews
@@ -19,13 +21,20 @@ def get_dataframe():
 
 
 def add_basic_features(data):
-
+    """
+    add_basic_features(data) takes a datafram with
+    review labels as first column as an input and
+    tputs an extended dataframe with features based
+    on the Yelp reviews meta data.
+    """
     reviews = local_import.reviews + remote_import.reviews
     data["reviews"] = reviews
 
     # city
     review_cities = local_import.cities + remote_import.cities
-    #data["review_cities"] = features_basic.cities_to_num(review_cities)
+    # city currently not added as a feture due to overfitting
+    # (too many non travel destinations in training set).
+    # data["review_cities"] = features_basic.cities_to_num(review_cities)
 
     # date
     review_dates = local_import.dates + remote_import.dates
@@ -63,9 +72,16 @@ def add_basic_features(data):
 
 
 def add_pos_features(data):
+    """
+    add_pos_features(data) takes a dataframe
+    as an input and outputs an exteded dataframe
+    with part of speech features added using SPOT.
+    """
     # reviews = local_import.reviews + remote_import.reviews
     # reviews_tokenized = review_tokenize(reviews)
     # reviews_tagged = features_pos.review_tokenize(reviews)
+
+    # load tagged reviews from pickle dump because java based SPOST takes significant amount of time.
     reviews_tagged = features_pos.get_pos_pickle()
 
     data["adv count"] = [
@@ -111,27 +127,34 @@ def add_pos_features(data):
     return data
 
 
-def saliance(unigrams, theta=.18):
+def saliance(unigrams, unigram_labels, theta=.50):
     """ saliance(data) takes a dataframe and returns a list of dropable variables
     that do not meet a salience theta
     """
+    #unigrams = pd.DataFrame(unigram_labels).join(unigrams)
     drop_words = []
     for word in unigrams:
-        word_values = unigrams[word]
+        count = 0
+        l_prob_sum = 0
+        r_prob_sum = 0
         word_values = unigrams[word]
         normalizer = float(sum(word_values))
-
-        prob = [float(n) / normalizer for n in word_values]
-        local_prob = float(sum(prob[:1420]))
-        remote_prob = float(sum(prob[1420:]))
-        if local_prob > remote_prob:
-            salience = 1 - remote_prob / local_prob
+        for label in unigram_labels:
+            if label == 'local':
+                word_value = word_values[count]
+                l_prob_sum += float(word_value) / normalizer
+            else:
+                word_value = word_values[count]
+                r_prob_sum += float(word_value) / normalizer
+            count += 1        
+            
+        if l_prob_sum > r_prob_sum:
+            salience = 1 - r_prob_sum / l_prob_sum
         else:
-            salience = 1 - local_prob / remote_prob
+            salience = 1 - l_prob_sum / r_prob_sum
         if salience < theta:
             drop_words.append(word)
     return drop_words
-
 
 data = get_dataframe()
 data = add_basic_features(data)
@@ -159,9 +182,11 @@ unigram_train = pd.DataFrame(
 unigram_test = pd.DataFrame(
     unigram_transform.A, columns=unigram_vect.get_feature_names())
 
-drop_words = saliance(unigram_train)
-unigram_train.drop(drop_words, axis=1, inplace=True)
-unigram_test.drop(drop_words, axis=1, inplace=True)
+unigram_labels = y_train
+
+#drop_words = saliance(unigram_train, unigram_labels)
+#unigram_train.drop(drop_words, axis=1, inplace=True)
+#unigram_test.drop(drop_words, axis=1, inplace=True)
 
 X_train = X_train.drop('reviews', axis='columns')
 X_train = X_train.join(unigram_train,
@@ -180,8 +205,10 @@ gnb.fit(X_train, y_train)
 logistic = sklearn.linear_model.LogisticRegression()
 logistic.fit(X_train, y_train)
 
+svm = sklearn.svm.LinearSVC()
+svm.fit(X_train, y_train)
 
 score_lr = logistic.score(X_test, y_test)
 score_nb = gnb.score(X_test, y_test)
-
-print('Logistical regression:', score_lr, 'Naive bayes: ', score_nb)
+score_svm = svm.score(X_test, y_test)
+print('Logistical regression:', score_lr, 'Naive bayes: ', score_nb, "SVM: ", score_svm)
