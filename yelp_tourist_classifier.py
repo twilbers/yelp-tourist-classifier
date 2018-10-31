@@ -48,7 +48,7 @@ def add_pos_features(data):
     with part of speech features added using SPOT.
     """
     reviews_tagged = get_pos_pickle(
-        '/home/gavagai/Dropbox/reviews_tagged.p')
+        'dump/scraped_reviews_tagged.p')
 
     data["adv count"] = [
         pos_counter.count_pos(review, pos_counter.adverbs)
@@ -99,9 +99,9 @@ def saliance(words, local_words, remote_words, theta=.50):
     """
     keep_words = []
     for i in range(words.shape[1]):
-        normalizer = words[:, i].nnz
-        l_prob_sum = local_words[:, i].nnz / normalizer
-        r_prob_sum = remote_words[:, i].nnz / normalizer
+        normalizer = words[:, i].sum()
+        l_prob_sum = local_words[:, i].sum() / normalizer
+        r_prob_sum = remote_words[:, i].sum() / normalizer
 
         min_ = min(r_prob_sum, l_prob_sum)
         max_ = max(r_prob_sum, l_prob_sum)
@@ -165,9 +165,10 @@ X_train, X_test, y_train, y_test = train_test_split(
 unigram_vect = CountVectorizer(
     analyzer="word",
     tokenizer=None,
+    ngram_range=(2,2),
     preprocessor=None,
     stop_words=None,
-    max_features=30000)
+    max_features=1000)
 
 unigram_fit = unigram_vect.fit_transform(X_train['review_text'])
 unigram_transform = unigram_vect.transform(X_test['review_text'])
