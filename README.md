@@ -1,0 +1,1 @@
+Using reviews scraped from yelp.com with https://github.com/twilbers/yelp-reviews-scraping to train a NLP classifier with the objective of predicting whether a review is written by a visitor to the area.
