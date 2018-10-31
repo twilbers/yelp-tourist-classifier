@@ -168,7 +168,7 @@ unigram_vect = CountVectorizer(
     ngram_range=(2,2),
     preprocessor=None,
     stop_words=None,
-    max_features=1000)
+    max_features=5000)
 
 unigram_fit = unigram_vect.fit_transform(X_train['review_text'])
 unigram_transform = unigram_vect.transform(X_test['review_text'])

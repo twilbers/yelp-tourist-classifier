@@ -19,7 +19,7 @@ def bag_of_words(reviews, **kwargs):
         unigram_train = unigram_vect.transform(reviews)
 
         unigram_train = unigram_vect.fit_transform(reviews)
-    elif 
-    unigram_train = unigram_vect.fit_transform(reviews)
+    else:
+        unigram_train = unigram_vect.fit_transform(reviews)
 
     return pd.DataFrame(vect_fit.A, columns=unigram_vect.get_feature_names())
