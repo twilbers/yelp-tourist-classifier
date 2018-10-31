@@ -1,73 +1,43 @@
-from review_import import remote_import, local_import
 import features_basic
-import features_pos
-from features_pos import pos_counter
+from features_pos import pos_counter, get_pos_pickle
 
+import numpy as np
 import pandas as pd
-import sklearn.model_selection
+
+from scipy.sparse.csr import csr_matrix
+
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+# from sklearn.feature_extraction.text import HashingVectorizer
+from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.naive_bayes import GaussianNB
 from sklearn.linear_model import LogisticRegression
-
-def get_dataframe():
-    """
-    get_dataframe() outputs a dataframe with review labels as the first column.
-    """
-
-    remote_reviews = remote_import.reviews
-    local_reviews = local_import.reviews
-    review_labels = (
-        ['local'] * len(local_reviews)) + (['remote'] * len(remote_reviews))
-    return pd.DataFrame(review_labels, columns=["review_labels"])
+# from sklearn.svm import LinearSVC
 
 
-def add_basic_features(data):
+def add_basic_features():
     """
     add_basic_features(data) takes a datafram with
     review labels as first column as an input and
     tputs an extended dataframe with features based
     on the Yelp reviews meta data.
     """
-    reviews = local_import.reviews + remote_import.reviews
-    data["reviews"] = reviews
+    data = pd.read_csv('data/all_reviews_cleaned.csv')
 
-    # city
-    review_cities = local_import.cities + remote_import.cities
-    # city currently not added as a feture due to overfitting
-    # (too many non travel destinations in training set).
-    # data["review_cities"] = features_basic.cities_to_num(review_cities)
-
-    # date
-    review_dates = local_import.dates + remote_import.dates
-    data["review_dates"] = [date for date in review_dates]
-
-    # votes
-    review_bstars = local_import.bstars + remote_import.bstars
-    data["review_bstars"] = [int(i) for i in review_bstars]
-    review_funny = local_import.funny + remote_import.funny
-    data["review_funny"] = [int(i) for i in review_funny]
-    review_useful = local_import.useful + remote_import.useful
-    data["review_useful"] = [int(i) for i in review_useful]
-    review_cool = local_import.cool + remote_import.cool
-    data["review_cool"] = [int(i) for i in review_cool]
-    review_rstars = local_import.rstars + remote_import.rstars
-    data["review_rstars"] = [int(i) for i in review_rstars]
-
-    # city mentioned in review
-    data["city_mentioned"] = features_basic.city_mentioned(
-        reviews, review_cities)
+    # Add features
+    data = features_basic.review_len(data, 'review_text')
 
     # week of year
-    review_dates = local_import.dates + remote_import.dates
-    data["review_dates"] = [features_basic.week_of_year(date)
-                            for date in review_dates]
+    data = features_basic.week_of_year(data, 'review_date')
 
     # day of week
-    review_dates = local_import.dates + remote_import.dates
-    data["review_dates"] = [features_basic.day_of_week(date)
-                            for date in review_dates]
+    data = features_basic.day_of_week(data, 'review_date')
 
-    # review length
-    data["review_length"] = features_basic.length(reviews)
+    # city mentioned
+    data = features_basic.city_mentioned(
+        data, 'business_city', 'review_text')
+
     return data
 
 
@@ -77,12 +47,8 @@ def add_pos_features(data):
     as an input and outputs an exteded dataframe
     with part of speech features added using SPOT.
     """
-    # reviews = local_import.reviews + remote_import.reviews
-    # reviews_tokenized = review_tokenize(reviews)
-    # reviews_tagged = features_pos.review_tokenize(reviews)
-
-    # load tagged reviews from pickle dump because java based SPOST takes significant amount of time.
-    reviews_tagged = features_pos.get_pos_pickle()
+    reviews_tagged = get_pos_pickle(
+        '/home/gavagai/Dropbox/reviews_tagged.p')
 
     data["adv count"] = [
         pos_counter.count_pos(review, pos_counter.adverbs)
@@ -127,88 +93,130 @@ def add_pos_features(data):
     return data
 
 
-def saliance(unigrams, unigram_labels, theta=.50):
-    """ saliance(data) takes a dataframe and returns a list of dropable variables
-    that do not meet a salience theta
+def saliance(words, local_words, remote_words, theta=.50):
+    """ saliance(data) takes a dataframe and returns a list of variables to keep
+    that meet a salience theta
     """
-    #unigrams = pd.DataFrame(unigram_labels).join(unigrams)
-    drop_words = []
-    for word in unigrams:
-        count = 0
-        l_prob_sum = 0
-        r_prob_sum = 0
-        word_values = unigrams[word]
-        normalizer = float(sum(word_values))
-        for label in unigram_labels:
-            if label == 'local':
-                word_value = word_values[count]
-                l_prob_sum += float(word_value) / normalizer
-            else:
-                word_value = word_values[count]
-                r_prob_sum += float(word_value) / normalizer
-            count += 1        
-            
-        if l_prob_sum > r_prob_sum:
-            salience = 1 - r_prob_sum / l_prob_sum
+    keep_words = []
+    for i in range(words.shape[1]):
+        normalizer = words[:, i].nnz
+        l_prob_sum = local_words[:, i].nnz / normalizer
+        r_prob_sum = remote_words[:, i].nnz / normalizer
+
+        min_ = min(r_prob_sum, l_prob_sum)
+        max_ = max(r_prob_sum, l_prob_sum)
+        if max_ != 0:
+                salience = (1 - (min_ / max_))
         else:
-            salience = 1 - l_prob_sum / r_prob_sum
-        if salience < theta:
-            drop_words.append(word)
-    return drop_words
+                salience = 0
+        if salience > theta:
+            keep_words.append(i)
+    return keep_words
 
-data = get_dataframe()
-data = add_basic_features(data)
-data = add_pos_features(data)
 
-X = data[data.columns[1:]]
-y = data["review_labels"]
+def sampe_data(data):
+    state_min = min(data.query('business_state != "NJ"').groupby(
+        'business_state').agg('count').iloc[:, 0])
 
-X_train, X_test, y_train, y_test = sklearn.model_selection.train_test_split(
-    X, y, train_size=0.75, test_size=0.25, random_state=333)
+    sample_ny = data.query('business_state == "NY"').sample(n=state_min)
+    sample_nv = data.query('business_state == "NV"').sample(n=state_min)
+    sample_ca = data.query('business_state == "CA"').sample(n=state_min)
+    sample_fl = data.query('business_state == "FL"').sample(n=state_min)
+    sample_il = data.query('business_state == "IL"').sample(n=state_min)
 
-unigram_vect = sklearn.feature_extraction.text.CountVectorizer(
+    sample = pd.concat(
+        [sample_ny, sample_nv, sample_ca,
+            sample_fl, sample_il]).reset_index(drop=True)
+
+    sample_min = min(sample.groupby('label_').agg('count').iloc[:, 0])
+
+    local_sample = sample.query('label_ == "local"').sample(n=sample_min)
+    remote_sample = sample.query('label_ == "remote"').sample(n=sample_min)
+
+    return pd.concat([local_sample, remote_sample]).reset_index(drop=True)
+
+
+def label_encoding(data, variables):
+    for variable in variables:
+        le = LabelEncoder()
+        data[[variable]] = le.fit_transform(yelp_df[variable])
+
+
+yelp_df = add_basic_features()
+yelp_df = yelp_df.rename(
+    columns={'cool': 'cool_', 'label': 'label_',
+             'funny': 'funny_', 'useful': 'useful_'})
+
+yelp_df = add_pos_features(yelp_df)
+label_encoding(yelp_df, [
+    'reviewer_location',
+    'business_zip', 'business_state', 'business_city'])
+
+X = yelp_df.drop([
+    'business_city', 'business_state',
+    'business_name', 'business_url', 'review_date',
+    'reviewer_id'], axis=1)
+
+y = yelp_df[['label_']].astype('category')
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, train_size=0.75, test_size=0.25)
+
+unigram_vect = CountVectorizer(
     analyzer="word",
     tokenizer=None,
     preprocessor=None,
     stop_words=None,
-    max_features=None)
+    max_features=30000)
 
-unigram_fit = unigram_vect.fit_transform(X_train['reviews'])
-unigram_transform = unigram_vect.transform(X_test['reviews'])
+unigram_fit = unigram_vect.fit_transform(X_train['review_text'])
+unigram_transform = unigram_vect.transform(X_test['review_text'])
 
-unigram_train = pd.DataFrame(
-    unigram_fit.A, columns=unigram_vect.get_feature_names())
+local_words = unigram_vect.transform(
+    X_train.query('label_ == "local"')['review_text'])
+remote_words = unigram_vect.transform(
+    X_train.query('label_ == "remote"')['review_text'])
+keep_index = saliance(unigram_fit, local_words, remote_words, theta=.65)
 
-unigram_test = pd.DataFrame(
-    unigram_transform.A, columns=unigram_vect.get_feature_names())
+unigram_transform = csr_matrix(unigram_transform[:, keep_index])
+unigram_fit = csr_matrix(unigram_fit[:, keep_index])
+keep_words = np.array(unigram_vect.get_feature_names())[keep_index]
 
-unigram_labels = y_train
+unigram_train = pd.DataFrame(unigram_fit.A, columns=keep_words)
 
-#drop_words = saliance(unigram_train, unigram_labels)
-#unigram_train.drop(drop_words, axis=1, inplace=True)
-#unigram_test.drop(drop_words, axis=1, inplace=True)
+unigram_test = pd.DataFrame(unigram_transform.A, columns=keep_words)
 
-X_train = X_train.drop('reviews', axis='columns')
-X_train = X_train.join(unigram_train,
-    on=None, how='left', lsuffix='', rsuffix='', sort=False)
+print(unigram_train.shape[1], " n-grams in model")
 
-X_test = X_test.drop('reviews', axis='columns')
-X_test = X_test.join(unigram_test,
-    on=None, how='left', lsuffix='', rsuffix='', sort=False)
+X_train = X_train.drop(['review_text', 'label_'], axis='columns')
+X_train = X_train.join(
+    unigram_train, on=None, how='left', lsuffix='',
+    rsuffix='', sort=False).fillna(0)
 
-X_train = X_train.fillna(0)
-X_test = X_test.fillna(0)
+X_test = X_test.drop(['review_text', 'label_'], axis='columns')
+X_test = X_test.join(
+    unigram_test, on=None, how='left', lsuffix='',
+    rsuffix='', sort=False).fillna(0)
+
+X_train = StandardScaler().fit_transform(X_train)
+X_test = StandardScaler().fit_transform(X_test)
 
 gnb = GaussianNB()
-gnb.fit(X_train, y_train)
+gnb.fit(X_train, y_train.values.ravel())
 
-logistic = sklearn.linear_model.LogisticRegression()
-logistic.fit(X_train, y_train)
+# logistic_lib = LogisticRegression(solver='liblinear')
+# logistic_lbf = LogisticRegression(solver='lbfgs')
+# logistic_newton = LogisticRegression(solver='newton-cg')
 
-svm = sklearn.svm.LinearSVC()
-svm.fit(X_train, y_train)
+# logistic_lib.fit(X_train, y_train.values.ravel())
+# logistic_lbf.fit(X_train, y_train.values.ravel())
+# logistic_newton.fit(X_train, y_train.values.ravel())
 
-score_lr = logistic.score(X_test, y_test)
+logistic_saga = LogisticRegression(solver='saga')
+logistic_saga.fit(X_train, y_train.values.ravel())
+
+score_lr = logistic_saga.score(X_test, y_test)
 score_nb = gnb.score(X_test, y_test)
-score_svm = svm.score(X_test, y_test)
-print('Logistical regression:', score_lr, 'Naive bayes: ', score_nb, "SVM: ", score_svm)
+print(
+    'Logistical regression:', score_lr,
+    'Naive bayes: ', score_nb)

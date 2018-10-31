@@ -1,37 +1,35 @@
 from nltk.tag.stanford import StanfordPOSTagger
 from nltk import word_tokenize
-from os import environ
 import pickle
 
+
 def review_tokenize(reviews):
-    return [word_tokenize(review) for review in reviews]
+    return map(lambda review: word_tokenize(review), reviews)
 
 
 def review_tager(tokenized_reviews):
-    # java_path = "C:/Program Files (x86)/Java/jre1.8.0_31/bin/java.exe"
-    java_path = environ['JAVAHOME']
-    st_model_path = 'tools/SPOST/models/english-bidirectional-distsim.tagger'
+    st_model_path = r'SPOST/models/english-bidirectional-distsim.tagger'
     st = StanfordPOSTagger(st_model_path,
-                           'tools/SPOST/stanford-postagger.jar')
+                           r'SPOST/stanford-postagger.jar')
     results = []
     errors = []
     count = 0
+
     for review in tokenized_reviews:
-        if count % 50 == 0:
-            print(count)
         try:
             results.append(st.tag(review))
             count += 1
         except:
+            print(count)
             errors.append(count)
             results.append(review)
             count += 1
     print('errors for the following indexes\n', errors)
-    return results  # [st.tag(review) for review in tokenized_reviews]
+    return results
 
 
-def get_pos_pickle():
-    with open('dump/reviews_tagged', 'rb') as f_reviews_tagged:
+def get_pos_pickle(file_location):
+    with open(file_location, 'rb') as f_reviews_tagged:
         return pickle.load(f_reviews_tagged)
 
 

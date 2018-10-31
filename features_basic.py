@@ -1,38 +1,30 @@
+import pandas as pd
+import numpy as np
 import time
 
 
-def cities_to_num(cities):
-    cities_dict = {}
-    results = []
-    count = 0
-    for city in cities:
-        if city not in cities_dict:
-            count += 1
-            cities_dict[city] = count
-            results.append(count)
-        else:
-            results.append(cities_dict[city])
-    return results
+def reviewer_state(df, reviewer_location):
+    return df.assign(reviewer_state=df[reviewer_location].astype(str).apply(
+        lambda x: x[-2:]))
 
 
-def week_of_year(date):
-    struct_time = time.strptime(date, "%Y-%m-%d")
-    return struct_time.tm_yday // 7
+def week_of_year(df, date_column):
+    return df.assign(week_of_year=df[date_column].apply(
+        lambda x: time.strptime(x, "%m/%d/%Y").tm_yday // 7))
 
 
-def day_of_week(date):
-    return time.strptime(date, "%Y-%m-%d").tm_wday
+def day_of_week(df, date_column):
+    return df.assign(day_of_week=df[date_column].apply(
+        lambda x: time.strptime(x, "%m/%d/%Y").tm_wday))
 
 
-def city_mentioned(reviews, cities):
-    cities_named = []
-    for i in range(len(reviews)):
-        if cities[i] in reviews[i] or cities[i].lower() in reviews[i]:
-            cities_named.append(1)
-        else:
-            cities_named.append(0)
-    return cities_named
+def city_mentioned(df, text_field1, text_field2):
+    vecIn = np.vectorize(lambda a, b: a.lower() in b.lower())
+    return df.assign(city_mentioned=np.where(
+        vecIn(df[text_field1].values, df[text_field2].values), 1, 0))
 
 
-def length(reviews):
-    return [len(review) for review in reviews]
+def review_len(df, text_column):
+    return df.assign(
+        review_length=df[text_column].apply(
+            lambda x: len(x)))
