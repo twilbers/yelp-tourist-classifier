@@ -137,6 +137,7 @@ def sampe_data(data):
 
 
 def label_encoding(data, variables):
+    # add pd.get_dummies
     for variable in variables:
         le = LabelEncoder()
         data[[variable]] = le.fit_transform(yelp_df[variable])
@@ -153,9 +154,11 @@ label_encoding(yelp_df, [
     'business_zip', 'business_state', 'business_city'])
 
 X = yelp_df.drop([
-    'business_city', 'business_state',
-    'business_name', 'business_url', 'review_date',
-    'reviewer_id'], axis=1)
+    'business_city', 'business_state', 'business_name',
+    'reviewer_location', 'business_url', 'review_date',
+    'reviewer_id', 'porper name'], axis=1)
+
+print("Model feature space includes:", ', '.join(X.columns))
 
 y = yelp_df[['label_']].astype('category')
 
@@ -165,10 +168,10 @@ X_train, X_test, y_train, y_test = train_test_split(
 unigram_vect = CountVectorizer(
     analyzer="word",
     tokenizer=None,
-    ngram_range=(2,2),
+    ngram_range=(1, 2),
     preprocessor=None,
     stop_words=None,
-    max_features=5000)
+    max_features=9000)
 
 unigram_fit = unigram_vect.fit_transform(X_train['review_text'])
 unigram_transform = unigram_vect.transform(X_test['review_text'])
@@ -188,6 +191,8 @@ unigram_train = pd.DataFrame(unigram_fit.A, columns=keep_words)
 unigram_test = pd.DataFrame(unigram_transform.A, columns=keep_words)
 
 print(unigram_train.shape[1], " n-grams in model")
+print(unigram_train.columns)
+
 
 X_train = X_train.drop(['review_text', 'label_'], axis='columns')
 X_train = X_train.join(
@@ -199,11 +204,12 @@ X_test = X_test.join(
     unigram_test, on=None, how='left', lsuffix='',
     rsuffix='', sort=False).fillna(0)
 
-X_train = StandardScaler().fit_transform(X_train)
-X_test = StandardScaler().fit_transform(X_test)
+X_std = StandardScaler()
+X_train = X_std.fit_transform(X_train)
+X_test = X_std.transform(X_test)
 
-gnb = GaussianNB()
-gnb.fit(X_train, y_train.values.ravel())
+# gnb = GaussianNB()
+# gnb.fit(X_train, y_train.values.ravel())
 
 # logistic_lib = LogisticRegression(solver='liblinear')
 # logistic_lbf = LogisticRegression(solver='lbfgs')
@@ -213,11 +219,12 @@ gnb.fit(X_train, y_train.values.ravel())
 # logistic_lbf.fit(X_train, y_train.values.ravel())
 # logistic_newton.fit(X_train, y_train.values.ravel())
 
-logistic_saga = LogisticRegression(solver='saga')
+logistic_saga = LogisticRegression(solver='liblinear')
 logistic_saga.fit(X_train, y_train.values.ravel())
 
+
 score_lr = logistic_saga.score(X_test, y_test)
-score_nb = gnb.score(X_test, y_test)
+# score_nb = gnb.score(X_test, y_test)
+
 print(
-    'Logistical regression:', score_lr,
-    'Naive bayes: ', score_nb)
+    'Logistical regression:', score_lr)

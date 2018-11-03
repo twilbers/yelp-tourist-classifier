@@ -28,3 +28,7 @@ def review_len(df, text_column):
     return df.assign(
         review_length=df[text_column].apply(
             lambda x: len(x)))
+
+
+def elite_status(df, text_column):
+    pass
