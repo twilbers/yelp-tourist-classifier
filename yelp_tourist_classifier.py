@@ -1,5 +1,5 @@
 import features_basic
-from features_pos import pos_counter, get_pos_pickle
+from features_pos import pos_counter, get_pos_pickle, pos_to_dict
 
 import numpy as np
 import pandas as pd
@@ -50,45 +50,16 @@ def add_pos_features(data):
     reviews_tagged = get_pos_pickle(
         'dump/scraped_reviews_tagged.p')
 
-    data["adv count"] = [
-        pos_counter.count_pos(review, pos_counter.adverbs)
-        for review in reviews_tagged]
+    pos_list = pos_to_dict(reviews_tagged)
 
-    data["past prog"] = [
-        pos_counter.count_pos(review, pos_counter.past_participle)
-        for review in reviews_tagged]
+    pos_keep = [
+        '#', 'RBS', 'RBR', 'VBZ', 'VBD',
+        'VBP', 'JJR', 'LS', 'MD', 'VBN',
+        'EX', '$']
 
-    data["simple future"] = [
-        pos_counter.count_pos(review, pos_counter.modal)
-        for review in reviews_tagged]
-
-    data["simple past"] = [
-        pos_counter.count_pos(review, pos_counter.simple_past)
-        for review in reviews_tagged]
-
-    data["simple present"] = [
-        pos_counter.count_pos(review, pos_counter.simple_present)
-        for review in reviews_tagged]
-
-    data['porper name'] = [
-        pos_counter.count_pos(review, pos_counter.pn)
-        for review in reviews_tagged]
-
-    data['prep count'] = [
-        pos_counter.count_pos(review, pos_counter.prep)
-        for review in reviews_tagged]
-
-    data['nn count'] = [
-        pos_counter.count_pos(review, pos_counter.nn)
-        for review in reviews_tagged]
-
-    data['adj count'] = [
-        pos_counter.count_pos(review, pos_counter.adj)
-        for review in reviews_tagged]
-
-    data['det count'] = [
-        pos_counter.count_pos(review, pos_counter.dt)
-        for review in reviews_tagged]
+    data = data.join(
+        pd.DataFrame.from_dict(pos_list)[pos_keep],
+        on=None, how='left', lsuffix='', rsuffix='', sort=False)
 
     return data
 
@@ -136,27 +107,22 @@ def sampe_data(data):
     return pd.concat([local_sample, remote_sample]).reset_index(drop=True)
 
 
-def label_encoding(data, variables):
-    # add pd.get_dummies
-    for variable in variables:
-        le = LabelEncoder()
-        data[[variable]] = le.fit_transform(yelp_df[variable])
-
-
 yelp_df = add_basic_features()
+
 yelp_df = yelp_df.rename(
     columns={'cool': 'cool_', 'label': 'label_',
              'funny': 'funny_', 'useful': 'useful_'})
 
 yelp_df = add_pos_features(yelp_df)
-label_encoding(yelp_df, [
-    'reviewer_location',
-    'business_zip', 'business_state', 'business_city'])
+
+le_zip = LabelEncoder()
+yelp_df[['business_zip']] = le_zip.fit_transform(yelp_df['business_zip'])
+
 
 X = yelp_df.drop([
     'business_city', 'business_state', 'business_name',
     'reviewer_location', 'business_url', 'review_date',
-    'reviewer_id', 'porper name'], axis=1)
+    'reviewer_id', 'funny_', 'cool_'], axis=1)
 
 print("Model feature space includes:", ', '.join(X.columns))
 
@@ -171,7 +137,7 @@ unigram_vect = CountVectorizer(
     ngram_range=(1, 2),
     preprocessor=None,
     stop_words=None,
-    max_features=9000)
+    max_features=10000)
 
 unigram_fit = unigram_vect.fit_transform(X_train['review_text'])
 unigram_transform = unigram_vect.transform(X_test['review_text'])
@@ -180,7 +146,7 @@ local_words = unigram_vect.transform(
     X_train.query('label_ == "local"')['review_text'])
 remote_words = unigram_vect.transform(
     X_train.query('label_ == "remote"')['review_text'])
-keep_index = saliance(unigram_fit, local_words, remote_words, theta=.65)
+keep_index = saliance(unigram_fit, local_words, remote_words, theta=.25)
 
 unigram_transform = csr_matrix(unigram_transform[:, keep_index])
 unigram_fit = csr_matrix(unigram_fit[:, keep_index])
@@ -208,23 +174,21 @@ X_std = StandardScaler()
 X_train = X_std.fit_transform(X_train)
 X_test = X_std.transform(X_test)
 
-# gnb = GaussianNB()
-# gnb.fit(X_train, y_train.values.ravel())
+
+gnb = GaussianNB()
+gnb.fit(X_train, y_train.values.ravel())
 
 # logistic_lib = LogisticRegression(solver='liblinear')
 # logistic_lbf = LogisticRegression(solver='lbfgs')
 # logistic_newton = LogisticRegression(solver='newton-cg')
 
-# logistic_lib.fit(X_train, y_train.values.ravel())
-# logistic_lbf.fit(X_train, y_train.values.ravel())
-# logistic_newton.fit(X_train, y_train.values.ravel())
-
-logistic_saga = LogisticRegression(solver='liblinear')
-logistic_saga.fit(X_train, y_train.values.ravel())
+logistic = LogisticRegression(solver='liblinear')
+logistic.fit(X_train, y_train.values.ravel())
 
 
-score_lr = logistic_saga.score(X_test, y_test)
-# score_nb = gnb.score(X_test, y_test)
+score_lr = logistic.score(X_test, y_test)
+score_nb = gnb.score(X_test, y_test)
 
 print(
-    'Logistical regression:', score_lr)
+    'Logistical regression:', score_lr, '\n',
+    'Naive Bayes :', score_nb)

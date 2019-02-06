@@ -33,6 +33,22 @@ def get_pos_pickle(file_location):
         return pickle.load(f_reviews_tagged)
 
 
+def pos_to_dict(tagged_reviews):
+    tags = []
+    pos_list = []
+    for review in tagged_reviews:
+        pos_dict = {}
+        for item in review:
+            if type(item) == tuple:
+                if item[1] in pos_dict:
+                    pos_dict[item[1]] += 1.0
+                else:
+                    pos_dict[item[1]] = 1.0
+                if not item[1] in tags:
+                    tags.append(item[1])
+        pos_list.append(pos_dict)
+    return pos_list
+
 class pos_counter():
 
     adverbs = [u'RB', u'RBR', u'RBS', u'RBS\r', u'RB\r', u'RBR\r']
