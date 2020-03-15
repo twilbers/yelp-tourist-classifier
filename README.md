@@ -8,11 +8,11 @@ Everyday millions of restaurant goers record their experiences and express their
 
 I decided to restrict my research to reviews of restaurants written in English by tourists in the United States. However, similar techniques could be applied to other languages and domains. To this goal, I decided to code a web [crawler](https://github.com/tybrs/yelp-corpus-generator) to scrap reviews from five of the most visited and highly populated areas to harvest reviews for my corpus:
 
-    * New York, NY
-    * Chicago, IL
-    * Las Vegas, NV
-    * Los Angeles, CA
-    * Orlando, FL
+* New York, NY
+* Chicago, IL
+* Las Vegas, NV
+* Los Angeles, CA
+* Orlando, FL
 
 This allows for the equal sampling of local and tourist reviews from a multitude of cities. The final results included 53,000 reviews across 42,800 URLs. In order not to over represent cities with more reviews I took a sample of 6,859 reviews from each area. While scraping I was able to populate the data with labels for training and testing, by comparing the user's location against the business the review is about.
 
