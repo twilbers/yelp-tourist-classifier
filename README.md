@@ -49,7 +49,7 @@ For features, I constructed an n-gram model of the corpus that included both uni
 
 <img src="https://render.githubusercontent.com/render/math?math=sailence(g)= \frac{1}{N}\sum_{i=1}^{N-1}\sum_{j=i+1}^{N} 1- \frac{min(P(g|s_{i}), P(g|s_{j}))}{max(P(g|s_{i}), P(g|s_{j}))}" width="350" height="100">
 
-
+$$sailence(g)= \frac{1}{N}\sum_{i=1}^{N-1}\sum_{j=i+1}^{N} 1- \frac{min(P(g|s_{i}), P(g|s_{j}))}{max(P(g|s_{i}), P(g|s_{j}))}$$
 The following tables include some n-grams with a high salience:
 
 | UNI-GRAM​ | SALIENCE​ | LABEL​  |
