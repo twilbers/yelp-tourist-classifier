@@ -47,9 +47,7 @@ You can see that verbs in the singular present (VBZ, VBP) are more common in loc
 
 For features, I constructed an n-gram model of the corpus that included both unigrams and bigram with a combined vocabulary of 434,103 n-grams. In order to increase accuracy and decrease noise I implemented Pak & Paroubek’s (2010) strategy of calculating salience to discriminate common n-grams. Salience is calculated as follows:
 
-<img src="https://render.githubusercontent.com/render/math?math=sailence(g)= \frac{1}{N}\sum_{i=1}^{N-1}\sum_{j=i+1}^{N} 1- \frac{min(P(g|s_{i}), P(g|s_{j}))}{max(P(g|s_{i}), P(g|s_{j}))}" width="350" height="100">
-
-$$sailence(g)= \frac{1}{N}\sum_{i=1}^{N-1}\sum_{j=i+1}^{N} 1- \frac{min(P(g|s_{i}), P(g|s_{j}))}{max(P(g|s_{i}), P(g|s_{j}))}$$
+<img src="https://render.githubusercontent.com/render/math?math=sailence(g)= \frac{1}{N}\sum_{i=1}^{N-1}\sum_{j=i+1}^{N} 1- \frac{min(P(g|s_{i}), P(g|s_{j}))}{max(P(g|s_{i}), P(g|s_{j}))}" width="300" height="50">
 
 The following tables include some n-grams with a high salience:
 
@@ -58,6 +56,8 @@ The following tables include some n-grams with a high salience:
 | disney​   | 0.883721​ | remote​ |
 | hotel​    | 0.812500​ | remote​ |
 | nyc​      | 0.810526​ | remote​ |
+| often​    | 0.694444 | ​local​  |
+| parking​  | 0.685000​ | local​  |
 
 I used a salience threshold to filter out common n-grams. Then, I built a classifier that used a n-gram model after and the distribution of POS frequencies to estimate whether a review was written by a tourist or a local. The final classifier was tested against a confusion matrix and produced the following confusion matrix normalized across true labels.
 
