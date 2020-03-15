@@ -33,10 +33,10 @@ This allowed me to do a pairwise POS-tag analysis on the corpus to find possible
 
 <img src="https://render.githubusercontent.com/render/math?math=P^{T}_{1,2} = \frac{N^{T}_{1} - N^{T}_{2}}{N^{T}_{1} + N^{T}_{2}}">
 
-where <img src="https://render.githubusercontent.com/render/math?math=N^{T}_{1}}"> and <img src="https://render.githubusercontent.com/render/math?math=N^{T}_{2}}"> denote then number of tag T occurrences in local and remote reviews respectively. The following graph represents the <img src="https://render.githubusercontent.com/render/math?math=P^{T}"> values for local vs. remote reviews:
+where <img src="https://render.githubusercontent.com/render/math?math=N^{T}_{1}"> and <img src="https://render.githubusercontent.com/render/math?math=N^{T}_{2}"> denote then number of tag T occurrences in local and remote reviews respectively. The following graph represents the <img src="https://render.githubusercontent.com/render/math?math=P^{T}"> values for local vs. remote reviews:
 
-![pairwise-post](images/pairwise-post.png)
-![pairwise-post-all](images/pairwise-post-all.png)
+![pairwise-post](images/pairwise-post.png|width=65)
+![pairwise-post-all](images/pairwise-post-all.png|width=65)
 
 The Standford POS-tagger uses the Penn Treebank tag set. To better interpret a tag’s abbreviation, descriptions can be found [here](https://www.ling.upenn.edu/courses/Fall_2003/ling001/penn_treebank_pos.html)).
 
