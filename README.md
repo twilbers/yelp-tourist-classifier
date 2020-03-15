@@ -47,7 +47,7 @@ You can see that verbs in the singular present (VBZ, VBP) are more common in loc
 
 For features, I constructed an n-gram model of the corpus that included both unigrams and bigram with a combined vocabulary of 434,103 n-grams. In order to increase accuracy and decrease noise I implemented Pak & Paroubek’s (2010) strategy of calculating salience to discriminate common n-grams. Salience is calculated as follows:
 
-<img src="https://render.githubusercontent.com/render/math?math=sailence(g)= \frac{1}{N}\sum{N-1}(i=1)\sum{N}(j=i+1) 1- \frac{min(P(g|s_{i}), P(g|s_{j}))}{max(P(g|s_{i}), P(g|s_{j}))}" width="350" height="100">
+<img src="https://render.githubusercontent.com/render/math?math=sailence(g)= \frac{1}{N}\sum_{i=1}^{N-1}\sum_{j=i+1}^{N} 1- \frac{min(P(g|s_{i}), P(g|s_{j}))}{max(P(g|s_{i}), P(g|s_{j}))}" width="350" height="100">
 
 
 The following tables include some n-grams with a high salience:
