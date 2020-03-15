@@ -31,14 +31,12 @@ I used the [Stanford Log-linear Part-Of-Speech Tagger](https://nlp.stanford.edu/
 
 This allowed me to do a pairwise POS-tag analysis on the corpus to find possible indicators for classification implemented from Pak & Paroubek (2010):
 
-<img src="https://render.githubusercontent.com/render/math?math=P^{T}_{1,2} = \frac{N^{T}_{1} - N^{T}_{2}}{N^{T}_{1} + N^{T}_{2}}">
+<img src="https://render.githubusercontent.com/render/math?math=P^{T}_{1,2} = \frac{N^{T}_{1} - N^{T}_{2}}{N^{T}_{1} + N^{T}_{2}}" width="250" height="100">
 
 where <img src="https://render.githubusercontent.com/render/math?math=N^{T}_{1}"> and <img src="https://render.githubusercontent.com/render/math?math=N^{T}_{2}"> denote then number of tag T occurrences in local and remote reviews respectively. The following graph represents the <img src="https://render.githubusercontent.com/render/math?math=P^{T}"> values for local vs. remote reviews:
 
 ![pairwise-post](images/pairwise-post.png)
-<!-- .element height="50%" width="50%" -->
 ![pairwise-post-all](images/pairwise-post-all.png)
-<!-- .element height="50%" width="50%" -->
 
 
 The Standford POS-tagger uses the Penn Treebank tag set. To better interpret a tag’s abbreviation, descriptions can be found [here](https://www.ling.upenn.edu/courses/Fall_2003/ling001/penn_treebank_pos.html)).
@@ -49,7 +47,7 @@ You can see that verbs in the singular present (VBZ, VBP) are more common in loc
 
 For features, I constructed an n-gram model of the corpus that included both unigrams and bigram with a combined vocabulary of 434,103 n-grams. In order to increase accuracy and decrease noise I implemented Pak & Paroubek’s (2010) strategy of calculating salience to discriminate common n-grams. Salience is calculated as follows:
 
-<img src="https://render.githubusercontent.com/render/math?math=sailence(g)= \frac{1}{N}sum{N-1}(i=1)sum{N}(j=i+1) 1- \frac{min(P(g|s_{i}), P(g|s_{j}))}{max(P(g|s_{i}), P(g|s_{j}))}">
+<img src="https://render.githubusercontent.com/render/math?math=sailence(g)= \frac{1}{N}sum{N-1}(i=1)sum{N}(j=i+1) 1- \frac{min(P(g|s_{i}), P(g|s_{j}))}{max(P(g|s_{i}), P(g|s_{j}))}" width="250" height="100">
 
 
 The following tables include some n-grams with a high salience:
