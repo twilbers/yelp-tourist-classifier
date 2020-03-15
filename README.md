@@ -31,7 +31,7 @@ I used the [Stanford Log-linear Part-Of-Speech Tagger](https://nlp.stanford.edu/
 
 This allowed me to do a pairwise POS-tag analysis on the corpus to find possible indicators for classification implemented from Pak & Paroubek (2010):
 
-<img src="https://render.githubusercontent.com/render/math?math=P^{T}_{1,2} = \frac{N^{T}_{1} - N^{T}_{2}}{N^{T}_{1} \+ N^{T}_{2}}" width="150" height="50" align="middle">
+<img src="https://render.githubusercontent.com/render/math?math=P^{T}_{1,2} = \frac{N^{T}_{1} - N^{T}_{2}}{N^{T}_{1} \\+ N^{T}_{2}}" width="150" height="50" align="middle">
 
 where <img src="https://render.githubusercontent.com/render/math?math=N^{T}_{1}"> and <img src="https://render.githubusercontent.com/render/math?math=N^{T}_{2}"> denote then number of tag T occurrences in local and remote reviews respectively. The following graph represents the <img src="https://render.githubusercontent.com/render/math?math=P^{T}"> values for local vs. remote reviews:
 
@@ -50,6 +50,7 @@ For features, I constructed an n-gram model of the corpus that included both uni
 <img src="https://render.githubusercontent.com/render/math?math=sailence(g)= \frac{1}{N}\sum_{i=1}^{N-1}\sum_{j=i+1}^{N} 1- \frac{min(P(g|s_{i}), P(g|s_{j}))}{max(P(g|s_{i}), P(g|s_{j}))}" width="350" height="100">
 
 $$sailence(g)= \frac{1}{N}\sum_{i=1}^{N-1}\sum_{j=i+1}^{N} 1- \frac{min(P(g|s_{i}), P(g|s_{j}))}{max(P(g|s_{i}), P(g|s_{j}))}$$
+
 The following tables include some n-grams with a high salience:
 
 | UNI-GRAM​ | SALIENCE​ | LABEL​  |
