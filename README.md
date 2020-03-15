@@ -4,6 +4,9 @@ Everyday millions of restaurant goers record their experiences and express their
 
 ![workflow](images/workflow.png)
 
+## Example
+![classifier](images/classifier.png)
+
 ## The Data: Gathering the Corpus
 
 I decided to restrict my research to reviews of restaurants written in English by tourists in the United States. However, similar techniques could be applied to other languages and domains. To this goal, I decided to code a web [crawler](https://github.com/tybrs/yelp-corpus-generator) to scrap reviews from five of the most visited and highly populated areas to harvest reviews for my corpus:
