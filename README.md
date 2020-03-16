@@ -34,7 +34,7 @@ I used the [Stanford Log-linear Part-Of-Speech Tagger](https://nlp.stanford.edu/
 
 This allowed me to do a pairwise POS-tag analysis on the corpus to find possible indicators for classification implemented from Pak & Paroubek (2010):
 
-<img src="https://render.githubusercontent.com/render/math?math=P^{T}_{1,2} = \frac{N^{T}_{1} - N^{T}_{2}}{N^{T}_{1} \\+ N^{T}_{2}}" width="150" height="50" align="middle">
+<img src="https://render.githubusercontent.com/render/math?math=P^{T}_{1,2} = \frac{N^{T}_{1} - N^{T}_{2}}{N^{T}_{1} %2B N^{T}_{2}}" width="150" height="50" align="middle">
 
 where <img src="https://render.githubusercontent.com/render/math?math=N^{T}_{1}"> and <img src="https://render.githubusercontent.com/render/math?math=N^{T}_{2}"> denote then number of tag T occurrences in local and remote reviews respectively. The following graph represents the <img src="https://render.githubusercontent.com/render/math?math=P^{T}"> values for local vs. remote reviews:
 
@@ -50,7 +50,7 @@ You can see that verbs in the singular present (VBZ, VBP) are more common in loc
 
 For features, I constructed an n-gram model of the corpus that included both unigrams and bigram with a combined vocabulary of 434,103 n-grams. In order to increase accuracy and decrease noise I implemented Pak & Paroubek’s (2010) strategy of calculating salience to discriminate common n-grams. Salience is calculated as follows:
 
-<img src="https://render.githubusercontent.com/render/math?math=sailence(g)= \frac{1}{N}\sum_{i=1}^{N-1}\sum_{j=i+1}^{N} 1- \frac{min(P(g|s_{i}), P(g|s_{j}))}{max(P(g|s_{i}), P(g|s_{j}))}" width="300" height="50">
+<img src="https://render.githubusercontent.com/render/math?math=sailence(g)= \frac{1}{N}\sum_{i=1}^{N-1}\sum_{j=i%2B1}^{N} 1- \frac{min(P(g|s_{i}), P(g|s_{j}))}{max(P(g|s_{i}), P(g|s_{j}))}" width="300" height="50">
 
 The following tables include some n-grams with a high salience:
 
